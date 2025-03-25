@@ -7,9 +7,7 @@ const UserSchema = new mongoose.Schema({
     email: { type: String, unique: true },
     contactNumber: { type: String, unique: true },
     password: String,
-    isVerified: { type: Boolean, default: false },
-    otp: String,
-    otpExpiry: Date
+    isVerified: { type: Boolean, default: false }
 });
 
 // Middleware to auto-increment the `id` field
