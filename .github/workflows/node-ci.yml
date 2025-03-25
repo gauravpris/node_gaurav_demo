@@ -1,0 +1,33 @@
+name: Node.js CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 23.7.0 # Change this to match your Node.js version
+
+      - name: Install Dependencies
+        run: npm install
+
+      # - name: Run Linting
+      #   run: npm run lint  # Remove this if you're not using ESLint
+
+      # - name: Run Tests
+      #   run: npm test  # Remove this if you don't have tests yet
