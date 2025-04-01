@@ -2,11 +2,11 @@ const User = require('../models/Users');
 
 exports.getProfile = async (req, res) => {
     try {
-        // Get user ID from verified JWT
-        const userId = req.user.userId;
+        // Use JWT user ID if no userId is passed in the request
+        const userId = req.body.userId || req.user.userId;
 
-        // Find user without sensitive fields
-        const user = await User.findById(userId)
+        // Find user by ID
+        const user = await User.findById(userId);
 
         if (!user) {
             return res.status(404).json({
@@ -22,7 +22,6 @@ exports.getProfile = async (req, res) => {
                 name: user.fullName,
                 email: user.email,
                 contactNumber: user.contactNumber,
-                // Add other public fields
             }
         });
 
