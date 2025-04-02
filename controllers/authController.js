@@ -84,10 +84,9 @@ exports.login = async (req, res) => {
                 userId: user._id,
                 email: user.email,
                 contactNumber: user.contactNumber,
-                role: user.role // Include if you have roles
+                // role: user.role // Include if you have roles
             },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
         );
 
         // Remove sensitive data before sending response

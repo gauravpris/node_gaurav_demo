@@ -4,25 +4,25 @@ const mongoose = require("mongoose");
 exports.getProfile = async (req, res) => {
     try {
         // Use JWT user ID if no userId is passed in the request
-        const userId = req.body.userId || req.user.userId;
+        const userId = req.query.userId || req.user?.userId;
 
         console.log("Fetching profile for userId:", userId); // Debug log
 
-        // Ensure userId is a valid number (since your `id` field seems numeric)
-        if (isNaN(userId)) {
+        // Ensure userId is a valid number
+        if (!userId || isNaN(userId)) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid user ID format",
             });
         }
 
-        // Find user by the `id` field instead of `_id`
+        // Find user by `id`
         const user = await User.findOne({ id: userId });
 
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: "User not found"
+                message: "User not found",
             });
         }
 
@@ -37,12 +37,12 @@ exports.getProfile = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Profile retrieval error:", error); // Log actual error
+        console.error("Profile retrieval error:", error);
 
         res.status(500).json({
             success: false,
             message: "Server error retrieving profile",
-            error: error.message // Send error details (for debugging)
+            error: error.message
         });
     }
 };
