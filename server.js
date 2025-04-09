@@ -20,5 +20,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/get_profile", profileRoutes)
 app.use("/api/all_users",allUserListRoute)
 app.use('/api/songs', songRoutes);
+app.use(express.static('public'));
+
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

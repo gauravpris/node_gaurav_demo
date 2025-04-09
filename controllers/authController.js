@@ -3,8 +3,12 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/Users");
 const sendEmail = require("../utils/mailer");
 const sendSMS = require("../utils/sms");
-//
+const admin = require('firebase-admin');
+const serviceAccount = require('../musicapp-practice-firebase.json');
 
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
 
 exports.signup = async (req, res) => {
     try {
@@ -47,7 +51,7 @@ exports.signup = async (req, res) => {
 
 exports.login = async (req, res) => {
     try {
-        const { emailOrPhone, password } = req.body;
+        const { emailOrPhone, password, deviceToken } = req.body; // Added deviceToken
 
         // Validation
         if (!emailOrPhone || !password) {
@@ -60,7 +64,7 @@ exports.login = async (req, res) => {
         // Find user
         const user = await User.findOne({
             $or: [{ email: emailOrPhone }, { contactNumber: emailOrPhone }]
-        }).select('+password'); // Make sure password is selected if it's normally excluded
+        }).select('+password');
 
         if (!user) {
             return res.status(401).json({
@@ -84,10 +88,36 @@ exports.login = async (req, res) => {
                 userId: user._id,
                 email: user.email,
                 contactNumber: user.contactNumber,
-                // role: user.role // Include if you have roles
             },
             process.env.JWT_SECRET,
         );
+
+        // Update user with device token if provided
+        if (deviceToken) {
+            user.deviceToken = deviceToken;
+            await user.save();
+        }
+
+        // Send welcome push notification if device token exists
+        if (user.deviceToken) {
+            const message = {
+                notification: {
+                    title: 'Welcome to Our App!',
+                    body: `Hello ${user.fullName}, thanks for logging in!`
+                },
+                token: user.deviceToken
+            };
+
+            try {
+                await admin.messaging().send(message);
+                console.log('Welcome notification sent successfully to:', user.email);
+            } catch (notificationError) {
+                console.error('Error sending welcome notification:', notificationError);
+                // Continue with login even if notification fails
+            }
+        }else{
+            console.error('Not getting device token from user');
+        }
 
         // Remove sensitive data before sending response
         user.password = undefined;
@@ -96,12 +126,12 @@ exports.login = async (req, res) => {
         res.status(200).json({
             success: true,
             message: "Login successful",
+            deviceToken: user.deviceToken ?? "",
             token,
             user: {
-                id: user.id,
+                id: user._id,  // Changed from user.id to user._id (Mongoose convention)
                 email: user.email,
                 contactNumber: user.contactNumber
-                // Add other safe-to-expose fields here
             }
         });
 
