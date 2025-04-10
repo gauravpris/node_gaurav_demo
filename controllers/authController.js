@@ -4,11 +4,30 @@ const User = require("../models/Users");
 const sendEmail = require("../utils/mailer");
 const sendSMS = require("../utils/sms");
 const admin = require('firebase-admin');
-const serviceAccount = require('../musicapp-practice-firebase.json');
+//const serviceAccount = require('../musicapp-practice-firebase.json');
 
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-});
+
+// Initialize Firebase Admin SDK with environment variables
+const serviceAccount = {
+    type: process.env.FIREBASE_TYPE,
+    project_id: process.env.FIREBASE_PROJECT_ID,
+    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'), // Replace \n for proper formatting
+    client_email: process.env.FIREBASE_CLIENT_EMAIL,
+    client_id: process.env.FIREBASE_CLIENT_ID,
+    auth_uri: process.env.FIREBASE_AUTH_URI,
+    token_uri: process.env.FIREBASE_TOKEN_URI,
+    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
+    client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
+    universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN,
+};
+
+// Initialize Firebase Admin if not already initialized
+if (!admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+    });
+}
 
 exports.signup = async (req, res) => {
     try {
@@ -48,7 +67,6 @@ exports.signup = async (req, res) => {
 };
 
 // Login with email/password
-
 exports.login = async (req, res) => {
     try {
         const { emailOrPhone, password, deviceToken } = req.body; // Added deviceToken
@@ -57,19 +75,19 @@ exports.login = async (req, res) => {
         if (!emailOrPhone || !password) {
             return res.status(400).json({
                 success: false,
-                message: "Please provide both email/contact number and password"
+                message: "Please provide both email/contact number and password",
             });
         }
 
         // Find user
         const user = await User.findOne({
-            $or: [{ email: emailOrPhone }, { contactNumber: emailOrPhone }]
+            $or: [{ email: emailOrPhone }, { contactNumber: emailOrPhone }],
         }).select('+password');
 
         if (!user) {
             return res.status(401).json({
                 success: false,
-                message: "Invalid credentials"
+                message: "Invalid credentials",
             });
         }
 
@@ -78,7 +96,7 @@ exports.login = async (req, res) => {
         if (!isMatch) {
             return res.status(401).json({
                 success: false,
-                message: "Invalid credentials"
+                message: "Invalid credentials",
             });
         }
 
@@ -89,7 +107,7 @@ exports.login = async (req, res) => {
                 email: user.email,
                 contactNumber: user.contactNumber,
             },
-            process.env.JWT_SECRET,
+            process.env.JWT_SECRET
         );
 
         // Update user with device token if provided
@@ -103,9 +121,9 @@ exports.login = async (req, res) => {
             const message = {
                 notification: {
                     title: 'Welcome to Our App!',
-                    body: `Hello ${user.fullName}, thanks for logging in!`
+                    body: `Hello ${user.fullName}, thanks for logging in!`,
                 },
-                token: user.deviceToken
+                token: user.deviceToken,
             };
 
             try {
@@ -115,7 +133,7 @@ exports.login = async (req, res) => {
                 console.error('Error sending welcome notification:', notificationError);
                 // Continue with login even if notification fails
             }
-        }else{
+        } else {
             console.error('Not getting device token from user');
         }
 
@@ -129,18 +147,17 @@ exports.login = async (req, res) => {
             deviceToken: user.deviceToken ?? "",
             token,
             user: {
-                id: user._id,  // Changed from user.id to user._id (Mongoose convention)
+                id: user._id,
                 email: user.email,
-                contactNumber: user.contactNumber
-            }
+                contactNumber: user.contactNumber,
+            },
         });
-
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({
             success: false,
             message: "Internal server error",
-            error: error.message
+            error: error.message,
         });
     }
 };
