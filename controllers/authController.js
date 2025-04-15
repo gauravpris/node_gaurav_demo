@@ -120,7 +120,7 @@ exports.login = async (req, res) => {
         if (user.deviceToken) {
             const message = {
                 notification: {
-                    title: 'Welcome to Our App!',
+                    title: 'Welcome to Our App CHODU PRIT!',
                     body: `Hello ${user.fullName}, thanks for logging in!`,
                 },
                 token: user.deviceToken,
